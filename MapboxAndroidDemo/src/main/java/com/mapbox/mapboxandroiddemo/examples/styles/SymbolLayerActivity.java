@@ -60,8 +60,7 @@ public class SymbolLayerActivity extends AppCompatActivity implements OnMapReady
     markerCoordinates.add(Feature.fromGeometry(
       Point.fromCoordinates(Position.fromCoordinates(-71.065634, 42.354950))) // Boston Common Park
     );
-    markerCoordinates.add(Feature.fromGeometry(
-      Point.fromCoordinates(Position.fromCoordinates(-71.097293, 42.346645))) // Fenway Park
+    markerCoordinates.add(Feature.fromGeometry(Point.fromCoordinates(Position.fromCoordinates(-71.097293, 42.346645))) // Fenway Park
     );
     markerCoordinates.add(Feature.fromGeometry(
       Point.fromCoordinates(Position.fromCoordinates(-71.053694, 42.363725))) // The Paul Revere House

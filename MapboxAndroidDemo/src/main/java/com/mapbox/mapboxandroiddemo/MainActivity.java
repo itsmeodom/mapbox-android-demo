@@ -87,6 +87,7 @@ import com.mapbox.mapboxandroiddemo.examples.styles.ShowHideLayersActivity;
 import com.mapbox.mapboxandroiddemo.examples.styles.SymbolLayerActivity;
 import com.mapbox.mapboxandroiddemo.examples.styles.VectorSourceActivity;
 import com.mapbox.mapboxandroiddemo.examples.styles.ZoomDependentFillColorActivity;
+import com.mapbox.mapboxandroiddemo.labs.FingerDrawActivity;
 import com.mapbox.mapboxandroiddemo.labs.IndoorMapActivity;
 import com.mapbox.mapboxandroiddemo.labs.LocationPickerActivity;
 import com.mapbox.mapboxandroiddemo.labs.LosAngelesTourismActivity;
@@ -617,6 +618,12 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
           R.string.activity_lab_rv_symbol_layer_on_map_description,
           new Intent(MainActivity.this, RecyclerViewSymbolLayerActivity.class),
           R.string.activity_lab_rv_symbol_layer_on_map_url, true
+        ));
+        exampleItemModel.add(new ExampleItemModel(
+          R.string.activity_labs_finger_draw_title,
+          R.string.activity_labs_finger_draw_description,
+          new Intent(MainActivity.this, FingerDrawActivity.class),
+          R.string.activity_labs_finger_draw_url, true
         ));
         currentCategory = R.id.nav_lab;
         break;
