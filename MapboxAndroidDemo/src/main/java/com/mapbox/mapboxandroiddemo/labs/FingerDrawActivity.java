@@ -1,8 +1,15 @@
 package com.mapbox.mapboxandroiddemo.labs;
 
+import android.graphics.Color;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.v7.app.AppCompatActivity;
+import android.view.Gravity;
+import android.view.Menu;
+import android.view.MenuItem;
+import android.view.View;
+import android.widget.FrameLayout;
+import android.widget.ImageView;
 
 import com.mapbox.mapboxandroiddemo.R;
 import com.mapbox.mapboxsdk.Mapbox;
@@ -36,6 +43,12 @@ public class FingerDrawActivity extends AppCompatActivity implements OnMapReadyC
 
   private int anchorPointNum;
 
+  private boolean inDrawingMode;
+  private boolean inPolygonTapMode;
+
+  private ImageView crosshair;
+  private View crosshair;
+
   private static final String CIRCLE_LAYER_GEOJSON_SOURCE_ID = "selected-points-for-circle-geojson-id";
   private static final String CIRCLE_LAYER_ID = "selected-points-for-circle-source-id";
   private static final String SELECTED_SOURCE_LAYER_ID = "selected-area-source-id";
@@ -51,6 +64,10 @@ public class FingerDrawActivity extends AppCompatActivity implements OnMapReadyC
 
     // This contains the MapView in XML and needs to be called after the access token is configured.
     setContentView(R.layout.activity_finger_draw);
+
+    crosshair = new View(this);
+    crosshair.setLayoutParams(new FrameLayout.LayoutParams(30, 30, Gravity.CENTER));
+    crosshair.setBackgroundColor(Color.RED);
 
     circleFeatureList = new ArrayList<>();
     circleFeatureCollection = FeatureCollection.fromFeatures(circleFeatureList);
@@ -101,6 +118,31 @@ public class FingerDrawActivity extends AppCompatActivity implements OnMapReadyC
       mapboxMap.clear();
       anchorPointNum = 0;
     }
+  }
+
+  @Override
+  public boolean onCreateOptionsMenu(Menu menu) {
+    getMenuInflater().inflate(R.menu.menu_finger_draw, menu);
+    return true;
+  }
+
+  @Override
+  public boolean onOptionsItemSelected(MenuItem item) {
+    switch (item.getItemId()) {
+      case R.id.menu_tap_on_map:
+        mapView.removeView(crosshair);
+        mapboxMap.getUiSettings().setAllGesturesEnabled(true);
+        inPolygonTapMode = true;
+        inDrawingMode = false;
+        return true;
+      case R.id.menu_draw_on_map:
+        mapView.addView(crosshair);
+        mapboxMap.getUiSettings().setAllGesturesEnabled(false);
+        inDrawingMode = true;
+        inPolygonTapMode = false;
+        return true;
+    }
+    return super.onOptionsItemSelected(item);
   }
 
   // Add the mapView lifecycle to the activity's lifecycle methods
