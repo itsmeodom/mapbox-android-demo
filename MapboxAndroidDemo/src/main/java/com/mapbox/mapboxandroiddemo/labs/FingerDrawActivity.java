@@ -4,15 +4,12 @@ import android.graphics.Color;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.v7.app.AppCompatActivity;
-import android.view.Gravity;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.view.View;
-import android.widget.FrameLayout;
-import android.widget.ImageView;
 
 import com.mapbox.mapboxandroiddemo.R;
 import com.mapbox.mapboxsdk.Mapbox;
+import com.mapbox.mapboxsdk.annotations.PolygonOptions;
 import com.mapbox.mapboxsdk.geometry.LatLng;
 import com.mapbox.mapboxsdk.maps.MapView;
 import com.mapbox.mapboxsdk.maps.MapboxMap;
@@ -22,13 +19,12 @@ import com.mapbox.mapboxsdk.style.layers.FillLayer;
 import com.mapbox.mapboxsdk.style.sources.GeoJsonSource;
 import com.mapbox.services.commons.geojson.Feature;
 import com.mapbox.services.commons.geojson.FeatureCollection;
-import com.mapbox.services.commons.geojson.Point;
-import com.mapbox.services.commons.models.Position;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class FingerDrawActivity extends AppCompatActivity implements OnMapReadyCallback, MapboxMap.OnMapClickListener {
+public class FingerDrawActivity extends AppCompatActivity implements OnMapReadyCallback,
+  MapboxMap.OnMapClickListener {
 
   private MapView mapView;
   private MapboxMap mapboxMap;
@@ -38,20 +34,17 @@ public class FingerDrawActivity extends AppCompatActivity implements OnMapReadyC
   private CircleLayer circleLayerOfTouchPoints;
 
   private FeatureCollection circleFeatureCollection;
-
-  private List<Feature> circleFeatureList;
-
-  private int anchorPointNum;
-
-  private boolean inDrawingMode;
-  private boolean inPolygonTapMode;
-
-
+  private Feature[] circleFeatureList;
   private static final String CIRCLE_LAYER_GEOJSON_SOURCE_ID = "selected-points-for-circle-geojson-id";
   private static final String CIRCLE_LAYER_ID = "selected-points-for-circle-source-id";
   private static final String SELECTED_SOURCE_LAYER_ID = "selected-area-source-id";
   private static final String SELECTED_SOURCE_GEOJSON_ID = "selected-area-source-id";
 
+  private int anchorPointNum;
+  private boolean inDrawingMode;
+  private boolean inPolygonTapMode;
+  private String TAG = "FingerDrawActivity";
+  private List<LatLng> polygon;
   @Override
   protected void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
@@ -63,8 +56,10 @@ public class FingerDrawActivity extends AppCompatActivity implements OnMapReadyC
     // This contains the MapView in XML and needs to be called after the access token is configured.
     setContentView(R.layout.activity_finger_draw);
 
-    circleFeatureList = new ArrayList<>();
+    circleFeatureList = new Feature[0];
     circleFeatureCollection = FeatureCollection.fromFeatures(circleFeatureList);
+
+    polygon = new ArrayList<>();
 
     mapView = findViewById(R.id.mapView);
     mapView.onCreate(savedInstanceState);
@@ -73,10 +68,10 @@ public class FingerDrawActivity extends AppCompatActivity implements OnMapReadyC
 
   @Override
   public void onMapReady(MapboxMap mapboxMap) {
-
     FingerDrawActivity.this.mapboxMap = mapboxMap;
     setUpCircleSourceAndLayer();
     setUpPolygonSourceAndLayer();
+    mapboxMap.addOnMapClickListener(this);
   }
 
   private void setUpPolygonSourceAndLayer() {
@@ -94,22 +89,31 @@ public class FingerDrawActivity extends AppCompatActivity implements OnMapReadyC
 
   @Override
   public void onMapClick(@NonNull LatLng point) {
-    anchorPointNum++;
-    addClickPointAsPolygonAnchor(point);
+
+//    addClickPointAsPolygonAnchor(point);
   }
 
+
   private void addClickPointAsPolygonAnchor(LatLng point) {
-    if (anchorPointNum <= 4) {
+    if (anchorPointNum <= 3) {
       if (sourceForCircleTouchPoints != null && circleFeatureCollection != null) {
-        circleFeatureCollection.getFeatures().add(circleFeatureCollection.getFeatures().size() + 1,
+        /*circleFeatureCollection.ad().add(circleFeatureCollection.getFeatures().size() + 1,
           Feature.fromGeometry(Point.fromCoordinates(Position.fromCoordinates(point.getLongitude(),
-            point.getLatitude()))));
+            point.getLatitude()))));*/
+
+        polygon.add(new LatLng(point.getLatitude(), point.getLongitude()));
+
+        mapboxMap.addPolygon(new PolygonOptions()
+          .addAll(polygon)
+          .fillColor(Color.parseColor("#3bb2d0")));
+
         sourceForCircleTouchPoints.setGeoJson(circleFeatureCollection);
+        anchorPointNum++;
       }
     } else {
+      mapboxMap.clear();
       circleFeatureCollection.getFeatures().clear();
       sourceForCircleTouchPoints.setGeoJson(circleFeatureCollection);
-      mapboxMap.clear();
       anchorPointNum = 0;
     }
   }
@@ -124,13 +128,11 @@ public class FingerDrawActivity extends AppCompatActivity implements OnMapReadyC
   public boolean onOptionsItemSelected(MenuItem item) {
     switch (item.getItemId()) {
       case R.id.menu_tap_on_map:
-        mapView.removeView(crosshair);
         mapboxMap.getUiSettings().setAllGesturesEnabled(true);
         inPolygonTapMode = true;
         inDrawingMode = false;
         return true;
       case R.id.menu_draw_on_map:
-        mapView.addView(crosshair);
         mapboxMap.getUiSettings().setAllGesturesEnabled(false);
         inDrawingMode = true;
         inPolygonTapMode = false;
