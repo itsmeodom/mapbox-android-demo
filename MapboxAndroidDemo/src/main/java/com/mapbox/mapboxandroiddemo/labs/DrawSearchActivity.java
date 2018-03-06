@@ -8,9 +8,11 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 
+import com.mapbox.geojson.Feature;
+import com.mapbox.geojson.FeatureCollection;
+import com.mapbox.geojson.Point;
 import com.mapbox.mapboxandroiddemo.R;
 import com.mapbox.mapboxsdk.Mapbox;
-import com.mapbox.mapboxsdk.annotations.PolygonOptions;
 import com.mapbox.mapboxsdk.geometry.LatLng;
 import com.mapbox.mapboxsdk.maps.MapView;
 import com.mapbox.mapboxsdk.maps.MapboxMap;
@@ -18,13 +20,12 @@ import com.mapbox.mapboxsdk.maps.OnMapReadyCallback;
 import com.mapbox.mapboxsdk.style.layers.CircleLayer;
 import com.mapbox.mapboxsdk.style.layers.FillLayer;
 import com.mapbox.mapboxsdk.style.sources.GeoJsonSource;
-import com.mapbox.services.commons.geojson.Feature;
-import com.mapbox.services.commons.geojson.FeatureCollection;
-import com.mapbox.services.commons.geojson.Point;
-import com.mapbox.services.commons.models.Position;
 
 import java.util.ArrayList;
 import java.util.List;
+
+import static com.mapbox.mapboxsdk.style.layers.PropertyFactory.circleColor;
+import static com.mapbox.mapboxsdk.style.layers.PropertyFactory.circleRadius;
 
 public class DrawSearchActivity extends AppCompatActivity implements OnMapReadyCallback,
   MapboxMap.OnMapClickListener {
@@ -87,49 +88,53 @@ public class DrawSearchActivity extends AppCompatActivity implements OnMapReadyC
     sourceForSelectedPolygonArea = new GeoJsonSource(SELECTED_SOURCE_GEOJSON_ID);
     mapboxMap.addSource(sourceForSelectedPolygonArea);
     selectedAreaFillLayerPolygon = new FillLayer(SELECTED_SOURCE_LAYER_ID, SELECTED_SOURCE_GEOJSON_ID);
+    mapboxMap.addLayer(selectedAreaFillLayerPolygon);
   }
 
   private void setUpCircleSourceAndLayer() {
     sourceForCircleTouchPoints = new GeoJsonSource(CIRCLE_LAYER_GEOJSON_SOURCE_ID);
     mapboxMap.addSource(sourceForCircleTouchPoints);
     circleLayerOfTouchPoints = new CircleLayer(CIRCLE_LAYER_ID, CIRCLE_LAYER_GEOJSON_SOURCE_ID);
+    circleLayerOfTouchPoints.setProperties(
+      circleRadius(9f),
+      circleColor(Color.BLUE)
+    );
+
+    mapboxMap.addLayer(circleLayerOfTouchPoints);
   }
 
   @Override
   public void onMapClick(@NonNull LatLng point) {
 
-    addClickPointAsPolygonAnchor(point);
+    addClickPointAsCircleLayerAnchor(point);
   }
 
 
-  private void addClickPointAsPolygonAnchor(LatLng point) {
+  private void addClickPointAsCircleLayerAnchor(LatLng point) {
     if (anchorPointNum <= 3) {
-      if (sourceForSelectedPolygonArea != null && polygonAreaFeatureCollection != null) {
-        if (polygonAreaFeatureCollection.getFeatures().size() == 0) {
-          Log.d(TAG, "addClickPointAsPolygonAnchor: polygonAreaFeatureCollection.getFeatures().size() == 0");
-          polygonAreaFeatureCollection = FeatureCollection.fromFeatures(new Feature[] {Feature.fromGeometry(
-            Point.fromCoordinates(Position.fromCoordinates(point.getLongitude(),
-              point.getLatitude())))});
-          Log.d(TAG, "addClickPointAsPolygonAnchor: polygonAreaFeatureCollection.getFeatures().size() == " +
-            +polygonAreaFeatureCollection.getFeatures().size());
+      if (sourceForCircleTouchPoints != null && circleFeatureCollection != null) {
+        if (circleFeatureCollection.features().size() == 0) {
+          Log.d(TAG, "addClickPointAsCircleLayerAnchor: polygonAreaFeatureCollection.features()().size() == 0");
+          circleFeatureCollection = FeatureCollection.fromFeatures(new Feature[] {Feature.fromGeometry(
+            Point.fromLngLat(point.getLongitude(), point.getLatitude()))});
 
-        } /*else {
-          Log.d(TAG, "addClickPointAsPolygonAnchor: polygonAreaFeatureCollection.getFeatures().size() == " +
-            +polygonAreaFeatureCollection.getFeatures().size());
-          polygonAreaFeatureCollection.getFeatures().add(Feature.fromGeometry(
-            Point.fromCoordinates(Position.fromCoordinates(point.getLongitude(),
-              point.getLatitude()))));
-        }*/
+        } else {
+          Log.d(TAG, "addClickPointAsCircleLayerAnchor: polygonAreaFeatureCollection.features()().size() == " +
+            +polygonAreaFeatureCollection.features().size());
 
-        sourceForSelectedPolygonArea.setGeoJson(polygonAreaFeatureCollection);
+          polygonAreaFeatureCollection.features().add(Feature.fromGeometry(
+            Point.fromLngLat(point.getLongitude(), point.getLatitude())));
+        }
+        sourceForCircleTouchPoints.setGeoJson(circleFeatureCollection);
         anchorPointNum++;
       }
     } else {
       mapboxMap.clear();
-      circleFeatureCollection.getFeatures().clear();
+      circleFeatureCollection.features().clear();
       sourceForCircleTouchPoints.setGeoJson(circleFeatureCollection);
       anchorPointNum = 0;
     }
+
   }
 
   @Override
