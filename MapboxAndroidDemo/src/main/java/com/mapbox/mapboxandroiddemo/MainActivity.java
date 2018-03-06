@@ -644,12 +644,13 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
           new Intent(MainActivity.this, AnimatedImageSourceActivity.class),
           R.string.activity_labs_gif_on_map_url, true, BuildConfig.MIN_SDK_VERSION
         ));
-        exampleItemModel.add(new ExampleItemModel(
+        exampleItemModels.add(new ExampleItemModel(
           R.string.activity_labs_finger_draw_title,
           R.string.activity_labs_finger_draw_description,
           new Intent(MainActivity.this, FingerDrawActivity.class),
-          R.string.activity_labs_finger_draw_url, true
+          R.string.activity_labs_finger_draw_url, true, BuildConfig.MIN_SDK_VERSION
         ));
+
         currentCategory = R.id.nav_lab;
         break;
       case R.id.nav_dds:
