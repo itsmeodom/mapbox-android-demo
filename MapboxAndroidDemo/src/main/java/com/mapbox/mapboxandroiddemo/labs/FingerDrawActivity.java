@@ -46,8 +46,6 @@ public class FingerDrawActivity extends AppCompatActivity implements OnMapReadyC
   private boolean inDrawingMode;
   private boolean inPolygonTapMode;
 
-  private ImageView crosshair;
-  private View crosshair;
 
   private static final String CIRCLE_LAYER_GEOJSON_SOURCE_ID = "selected-points-for-circle-geojson-id";
   private static final String CIRCLE_LAYER_ID = "selected-points-for-circle-source-id";
@@ -65,14 +63,10 @@ public class FingerDrawActivity extends AppCompatActivity implements OnMapReadyC
     // This contains the MapView in XML and needs to be called after the access token is configured.
     setContentView(R.layout.activity_finger_draw);
 
-    crosshair = new View(this);
-    crosshair.setLayoutParams(new FrameLayout.LayoutParams(30, 30, Gravity.CENTER));
-    crosshair.setBackgroundColor(Color.RED);
-
     circleFeatureList = new ArrayList<>();
     circleFeatureCollection = FeatureCollection.fromFeatures(circleFeatureList);
 
-    mapView = (MapView) findViewById(R.id.mapView);
+    mapView = findViewById(R.id.mapView);
     mapView.onCreate(savedInstanceState);
     mapView.getMapAsync(this);
   }
