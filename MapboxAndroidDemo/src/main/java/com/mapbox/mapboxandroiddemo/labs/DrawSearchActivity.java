@@ -4,6 +4,7 @@ import android.graphics.Color;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.v7.app.AppCompatActivity;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 
@@ -19,11 +20,13 @@ import com.mapbox.mapboxsdk.style.layers.FillLayer;
 import com.mapbox.mapboxsdk.style.sources.GeoJsonSource;
 import com.mapbox.services.commons.geojson.Feature;
 import com.mapbox.services.commons.geojson.FeatureCollection;
+import com.mapbox.services.commons.geojson.Point;
+import com.mapbox.services.commons.models.Position;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class FingerDrawActivity extends AppCompatActivity implements OnMapReadyCallback,
+public class DrawSearchActivity extends AppCompatActivity implements OnMapReadyCallback,
   MapboxMap.OnMapClickListener {
 
   private MapView mapView;
@@ -34,7 +37,9 @@ public class FingerDrawActivity extends AppCompatActivity implements OnMapReadyC
   private CircleLayer circleLayerOfTouchPoints;
 
   private FeatureCollection circleFeatureCollection;
+  private FeatureCollection polygonAreaFeatureCollection;
   private Feature[] circleFeatureList;
+  private Feature[] polygonFeatureList;
   private static final String CIRCLE_LAYER_GEOJSON_SOURCE_ID = "selected-points-for-circle-geojson-id";
   private static final String CIRCLE_LAYER_ID = "selected-points-for-circle-source-id";
   private static final String SELECTED_SOURCE_LAYER_ID = "selected-area-source-id";
@@ -43,8 +48,9 @@ public class FingerDrawActivity extends AppCompatActivity implements OnMapReadyC
   private int anchorPointNum;
   private boolean inDrawingMode;
   private boolean inPolygonTapMode;
-  private String TAG = "FingerDrawActivity";
+  private String TAG = "DrawSearchActivity";
   private List<LatLng> polygon;
+
   @Override
   protected void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
@@ -54,12 +60,15 @@ public class FingerDrawActivity extends AppCompatActivity implements OnMapReadyC
     Mapbox.getInstance(this, getString(R.string.access_token));
 
     // This contains the MapView in XML and needs to be called after the access token is configured.
-    setContentView(R.layout.activity_finger_draw);
+    setContentView(R.layout.activity_draw_search);
 
     circleFeatureList = new Feature[0];
+    polygonFeatureList = new Feature[0];
     circleFeatureCollection = FeatureCollection.fromFeatures(circleFeatureList);
+    polygonAreaFeatureCollection = FeatureCollection.fromFeatures(polygonFeatureList);
 
     polygon = new ArrayList<>();
+    anchorPointNum = 0;
 
     mapView = findViewById(R.id.mapView);
     mapView.onCreate(savedInstanceState);
@@ -68,15 +77,14 @@ public class FingerDrawActivity extends AppCompatActivity implements OnMapReadyC
 
   @Override
   public void onMapReady(MapboxMap mapboxMap) {
-    FingerDrawActivity.this.mapboxMap = mapboxMap;
+    DrawSearchActivity.this.mapboxMap = mapboxMap;
     setUpCircleSourceAndLayer();
     setUpPolygonSourceAndLayer();
     mapboxMap.addOnMapClickListener(this);
   }
 
   private void setUpPolygonSourceAndLayer() {
-    anchorPointNum = 0;
-    sourceForSelectedPolygonArea = new GeoJsonSource(SELECTED_SOURCE_LAYER_ID);
+    sourceForSelectedPolygonArea = new GeoJsonSource(SELECTED_SOURCE_GEOJSON_ID);
     mapboxMap.addSource(sourceForSelectedPolygonArea);
     selectedAreaFillLayerPolygon = new FillLayer(SELECTED_SOURCE_LAYER_ID, SELECTED_SOURCE_GEOJSON_ID);
   }
@@ -90,24 +98,30 @@ public class FingerDrawActivity extends AppCompatActivity implements OnMapReadyC
   @Override
   public void onMapClick(@NonNull LatLng point) {
 
-//    addClickPointAsPolygonAnchor(point);
+    addClickPointAsPolygonAnchor(point);
   }
 
 
   private void addClickPointAsPolygonAnchor(LatLng point) {
     if (anchorPointNum <= 3) {
-      if (sourceForCircleTouchPoints != null && circleFeatureCollection != null) {
-        /*circleFeatureCollection.ad().add(circleFeatureCollection.getFeatures().size() + 1,
-          Feature.fromGeometry(Point.fromCoordinates(Position.fromCoordinates(point.getLongitude(),
-            point.getLatitude()))));*/
+      if (sourceForSelectedPolygonArea != null && polygonAreaFeatureCollection != null) {
+        if (polygonAreaFeatureCollection.getFeatures().size() == 0) {
+          Log.d(TAG, "addClickPointAsPolygonAnchor: polygonAreaFeatureCollection.getFeatures().size() == 0");
+          polygonAreaFeatureCollection = FeatureCollection.fromFeatures(new Feature[] {Feature.fromGeometry(
+            Point.fromCoordinates(Position.fromCoordinates(point.getLongitude(),
+              point.getLatitude())))});
+          Log.d(TAG, "addClickPointAsPolygonAnchor: polygonAreaFeatureCollection.getFeatures().size() == " +
+            +polygonAreaFeatureCollection.getFeatures().size());
 
-        polygon.add(new LatLng(point.getLatitude(), point.getLongitude()));
+        } /*else {
+          Log.d(TAG, "addClickPointAsPolygonAnchor: polygonAreaFeatureCollection.getFeatures().size() == " +
+            +polygonAreaFeatureCollection.getFeatures().size());
+          polygonAreaFeatureCollection.getFeatures().add(Feature.fromGeometry(
+            Point.fromCoordinates(Position.fromCoordinates(point.getLongitude(),
+              point.getLatitude()))));
+        }*/
 
-        mapboxMap.addPolygon(new PolygonOptions()
-          .addAll(polygon)
-          .fillColor(Color.parseColor("#3bb2d0")));
-
-        sourceForCircleTouchPoints.setGeoJson(circleFeatureCollection);
+        sourceForSelectedPolygonArea.setGeoJson(polygonAreaFeatureCollection);
         anchorPointNum++;
       }
     } else {

@@ -89,7 +89,7 @@ import com.mapbox.mapboxandroiddemo.examples.styles.MapboxStudioStyleActivity;
 import com.mapbox.mapboxandroiddemo.examples.styles.ShowHideLayersActivity;
 import com.mapbox.mapboxandroiddemo.examples.styles.VectorSourceActivity;
 import com.mapbox.mapboxandroiddemo.examples.styles.ZoomDependentFillColorActivity;
-import com.mapbox.mapboxandroiddemo.labs.FingerDrawActivity;
+import com.mapbox.mapboxandroiddemo.labs.DrawSearchActivity;
 import com.mapbox.mapboxandroiddemo.labs.AnimatedImageSourceActivity;
 import com.mapbox.mapboxandroiddemo.labs.IndoorMapActivity;
 import com.mapbox.mapboxandroiddemo.labs.InsetMapActivity;
@@ -647,7 +647,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         exampleItemModels.add(new ExampleItemModel(
           R.string.activity_labs_finger_draw_title,
           R.string.activity_labs_finger_draw_description,
-          new Intent(MainActivity.this, FingerDrawActivity.class),
+          new Intent(MainActivity.this, DrawSearchActivity.class),
           R.string.activity_labs_finger_draw_url, true, BuildConfig.MIN_SDK_VERSION
         ));
 
