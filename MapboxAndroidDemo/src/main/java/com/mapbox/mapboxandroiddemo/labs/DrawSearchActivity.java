@@ -20,11 +20,18 @@ import com.mapbox.mapboxsdk.maps.MapboxMap;
 import com.mapbox.mapboxsdk.maps.OnMapReadyCallback;
 import com.mapbox.mapboxsdk.style.layers.CircleLayer;
 import com.mapbox.mapboxsdk.style.layers.FillLayer;
+import com.mapbox.mapboxsdk.style.layers.LineLayer;
+import com.mapbox.mapboxsdk.style.layers.Property;
+import com.mapbox.mapboxsdk.style.layers.PropertyFactory;
 import com.mapbox.mapboxsdk.style.sources.GeoJsonSource;
+import com.mapbox.services.commons.geojson.LineString;
 
 import java.util.ArrayList;
 import java.util.List;
 
+import static com.mapbox.mapboxsdk.style.functions.Function.property;
+import static com.mapbox.mapboxsdk.style.functions.stops.Stop.stop;
+import static com.mapbox.mapboxsdk.style.functions.stops.Stops.categorical;
 import static com.mapbox.mapboxsdk.style.layers.PropertyFactory.circleColor;
 import static com.mapbox.mapboxsdk.style.layers.PropertyFactory.circleRadius;
 
@@ -35,22 +42,29 @@ public class DrawSearchActivity extends AppCompatActivity implements OnMapReadyC
   private MapboxMap mapboxMap;
   private GeoJsonSource sourceForSelectedPolygonArea;
   private GeoJsonSource sourceForCircleTouchPoints;
+  private GeoJsonSource lineLayerGeoJsonSource;
   private FillLayer selectedAreaFillLayerPolygon;
   private CircleLayer circleLayerOfTouchPoints;
+  private LineLayer lineStringLayerForSearchArea;
 
   private FeatureCollection circleFeatureCollection;
   private FeatureCollection polygonAreaFeatureCollection;
+  private FeatureCollection lineLayerFeatureCollection;
   private Feature[] circleFeatureList;
   private Feature[] polygonFeatureList;
-  private static final String CIRCLE_LAYER_GEOJSON_SOURCE_ID = "selected-points-for-circle-geojson-id";
-  private static final String CIRCLE_LAYER_ID = "selected-points-for-circle-source-id";
-  private static final String SELECTED_SOURCE_LAYER_ID = "selected-area-source-id";
-  private static final String SELECTED_SOURCE_GEOJSON_ID = "selected-area-source-id";
+  private Feature[] lineStringFeatureList;
+  private static final String CIRCLE_LAYER_GEOJSON_SOURCE_ID = "CIRCLE_LAYER_GEOJSON_SOURCE_ID";
+  private static final String CIRCLE_LAYER_ID = "CIRCLE_LAYER_ID";
+  private static final String SELECTED_SOURCE_LAYER_ID = "SELECTED_SOURCE_LAYER_ID";
+  private static final String SELECTED_SOURCE_GEOJSON_ID = "SELECTED_SOURCE_GEOJSON_ID";
+  private static final String LINESTRING_LAYER_ID = "LINESTRING_LAYER_ID";
+  private static final String LINESTRING_GEOJSON_SOURCE_ID = "LINESTRING_GEOJSON_SOURCE_ID";
 
   private int anchorPointNum;
   private boolean inDrawingMode;
   private boolean inPolygonTapMode;
   private String TAG = "DrawSearchActivity";
+  private String SEARCH_AREA_BLUE = "#4f83ff";
   private List<LatLng> listOfPolygonCoordinates;
 
   @Override
@@ -68,6 +82,7 @@ public class DrawSearchActivity extends AppCompatActivity implements OnMapReadyC
     polygonFeatureList = new Feature[0];
     circleFeatureCollection = FeatureCollection.fromFeatures(circleFeatureList);
     polygonAreaFeatureCollection = FeatureCollection.fromFeatures(polygonFeatureList);
+    lineLayerFeatureCollection = FeatureCollection.fromFeatures(lineStringFeatureList);
 
     listOfPolygonCoordinates = new ArrayList<>();
     anchorPointNum = 0;
@@ -81,9 +96,24 @@ public class DrawSearchActivity extends AppCompatActivity implements OnMapReadyC
   public void onMapReady(MapboxMap mapboxMap) {
     Log.d(TAG, "onMapReady: ");
     DrawSearchActivity.this.mapboxMap = mapboxMap;
+    setUpLineLayerSourceAndLayer();
     setUpCircleSourceAndLayer();
     setUpPolygonSourceAndLayer();
     mapboxMap.addOnMapClickListener(this);
+  }
+
+  private void setUpLineLayerSourceAndLayer() {
+    lineLayerGeoJsonSource = new GeoJsonSource(LINESTRING_GEOJSON_SOURCE_ID, lineLayerFeatureCollection);
+    mapboxMap.addSource(lineLayerGeoJsonSource);
+    lineStringLayerForSearchArea = new LineLayer(LINESTRING_LAYER_ID, LINESTRING_GEOJSON_SOURCE_ID);
+    lineStringLayerForSearchArea.setProperties(
+      PropertyFactory.lineCap(Property.LINE_CAP_ROUND),
+      PropertyFactory.lineJoin(Property.LINE_JOIN_ROUND),
+      PropertyFactory.lineWidth(3f),
+      PropertyFactory.visibility(Property.VISIBLE),
+      PropertyFactory.lineColor(Color.parseColor(SEARCH_AREA_BLUE))
+    );
+    mapboxMap.addLayer(lineStringLayerForSearchArea);
   }
 
   private void setUpPolygonSourceAndLayer() {
@@ -108,8 +138,19 @@ public class DrawSearchActivity extends AppCompatActivity implements OnMapReadyC
 
   @Override
   public void onMapClick(@NonNull LatLng point) {
+    anchorPointNum++;
     Log.d(TAG, "onMapClick: ");
     addClickPointAsCircleLayerAnchor(point);
+    addClickPointToLineLayer();
+  }
+
+  private void addClickPointToLineLayer(LatLng point) {
+    if (anchorPointNum > 0) {
+//    LineString lineString = LineString.fromCoordinates(routeCoordinates);
+      lineLayerFeatureCollection.features().add(Feature.fromGeometry(
+        Point.fromLngLat(point.getLongitude(), point.getLatitude())));
+
+    }
   }
 
   private void addClickPointAsCircleLayerAnchor(LatLng point) {
@@ -134,7 +175,6 @@ public class DrawSearchActivity extends AppCompatActivity implements OnMapReadyC
 
 //      sourceForCircleTouchPoints.setGeoJson(circleFeatureCollection);
 
-      anchorPointNum++;
     }
     /*} else {
       anchorPointNum = 0;
@@ -161,7 +201,7 @@ public class DrawSearchActivity extends AppCompatActivity implements OnMapReadyC
     mapboxMap.addPolygon(new PolygonOptions()
       .addAll(polygonCoordinates)
       .alpha(.5f)
-      .fillColor(Color.parseColor("#4f83ff")));
+      .fillColor(Color.parseColor(SEARCH_AREA_BLUE)));
   }
 
   @Override
